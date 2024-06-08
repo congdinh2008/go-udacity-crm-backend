@@ -24,6 +24,20 @@ The API has the following endpoints:
 - PUT api/v1/customers/{id} - Update a customer by id
 - DELETE api/v1/customers/{id} - Delete a customer by id
 
+## Docker Image
+
+To build the docker image, you can run the following command:
+
+```bash
+docker build -t crm-api:latest .
+```
+
+To run the docker image, you can run the following command:
+
+```bash
+docker run -d -p 8080:8080 crm-api
+```
+
 ## Running Tests
 
 To run the tests, you can run the following command:
