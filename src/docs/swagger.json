@@ -23,7 +23,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Customer"
+                                "$ref": "#/definitions/viewmodels.CustomerViewModel"
                             }
                         }
                     }
@@ -48,7 +48,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerCreateViewModel"
                         }
                     }
                 ],
@@ -56,7 +56,7 @@
                     "201": {
                         "description": "Successfully created",
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerViewModel"
                         }
                     },
                     "400": {
@@ -80,7 +80,7 @@
                 "summary": "Show a customer",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Customer ID",
                         "name": "id",
                         "in": "path",
@@ -91,7 +91,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerViewModel"
                         }
                     }
                 }
@@ -110,7 +110,7 @@
                 "summary": "Update an existing customer",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Customer ID",
                         "name": "id",
                         "in": "path",
@@ -122,7 +122,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerEditViewModel"
                         }
                     }
                 ],
@@ -130,7 +130,7 @@
                     "200": {
                         "description": "Successfully updated",
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerViewModel"
                         }
                     },
                     "400": {
@@ -152,7 +152,7 @@
                 "summary": "Delete a customer",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Customer ID",
                         "name": "id",
                         "in": "path",
@@ -171,7 +171,27 @@
         }
     },
     "definitions": {
-        "models.Customer": {
+        "viewmodels.CustomerCreateViewModel": {
+            "type": "object",
+            "properties": {
+                "contacted": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "viewmodels.CustomerEditViewModel": {
             "type": "object",
             "properties": {
                 "contacted": {
@@ -181,7 +201,30 @@
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "viewmodels.CustomerViewModel": {
+            "type": "object",
+            "properties": {
+                "contacted": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"

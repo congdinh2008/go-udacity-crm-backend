@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strconv"
 	"testing"
 
 	"congdinh.com/crm/models"
 	"congdinh.com/crm/services"
+	viewmodels "congdinh.com/crm/view-models"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -35,7 +36,7 @@ func TestCustomerController_GetCustomers(t *testing.T) {
 		t.Errorf("Expected status code %d, but got %d", http.StatusOK, rr.Code)
 	}
 	// Check the response body
-	expectedResponse := []models.Customer{}
+	expectedResponse := []viewmodels.CustomerViewModel{}
 	json.Unmarshal(rr.Body.Bytes(), &expectedResponse)
 	actualResponse := customerService.GetAll()
 	if !reflect.DeepEqual(actualResponse, expectedResponse) {
@@ -48,9 +49,9 @@ func TestCustomerController_GetCustomer(t *testing.T) {
 	customerService := services.NewCustomerService()
 	// Create a new customer controller
 	customerController := NewCustomerController(customerService)
+
 	// Create a new customer
-	newCustomer := models.Customer{
-		ID:        6,
+	newCustomer := viewmodels.CustomerCreateViewModel{
 		Name:      "Vinh Dinh",
 		Role:      "Developer",
 		Email:     "vinhdinh@example.com",
@@ -58,28 +59,59 @@ func TestCustomerController_GetCustomer(t *testing.T) {
 		Contacted: false,
 	}
 	// Add the new customer to the service
-	customerService.Create(newCustomer)
+	result, err := customerService.Create(newCustomer)
+
+	if err != nil {
+		t.Errorf("Expected Create to return nil error, but got %s", err.Error())
+	}
+
+	if result.ID == uuid.Nil {
+		t.Error("Expected Create to return a new customer ID, but got nil")
+	}
+
 	// Create a new request
-	req, err := http.NewRequest("GET", "/api/v1/customers/6", nil)
+	req, err := http.NewRequest("GET", "/api/v1/customers/"+result.ID.String(), nil)
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	// Create a new response recorder
 	rr := httptest.NewRecorder()
+
 	// Serve the request
 	router := mux.NewRouter()
 	customerController.RegisterRoutes(router)
 	router.ServeHTTP(rr, req)
+
 	// Check the response status code
 	if rr.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, but got %d", http.StatusOK, rr.Code)
 	}
-	// Check get customer by ID 6
-	expectedResponse := customerService.GetById(6)
-	actualResponse := newCustomer
 
-	if !reflect.DeepEqual(actualResponse, *expectedResponse) {
+	// Check the response body
+	expectedResponse := result
+	actualResponse := viewmodels.CustomerViewModel{}
+	json.Unmarshal(rr.Body.Bytes(), &actualResponse)
+
+	if !reflect.DeepEqual(actualResponse, expectedResponse) {
 		t.Errorf("Expected response body %v, but got %v", expectedResponse, actualResponse)
+	}
+
+	// Check if the customer was created
+	createdCustomer := customerService.GetById(result.ID)
+	if createdCustomer == nil {
+		t.Errorf("Expected customer with ID %s to be created, but got nil", result.ID.String())
+	} else {
+		if createdCustomer.Name != newCustomer.Name {
+			t.Errorf("Expected customer with ID %s to have name %s, but got '%s'", result.ID.String(), newCustomer.Name, createdCustomer.Name)
+		}
+		if createdCustomer.Role != newCustomer.Role {
+			t.Errorf("Expected customer with ID %s to have role %s, but got '%s'", result.ID.String(), newCustomer.Role, createdCustomer.Role)
+		}
+		if createdCustomer.Email != newCustomer.Email {
+			t.Errorf("Expected customer with ID %s to have email %s, but got '%s'", result.ID.String(), newCustomer.Email, createdCustomer.Email)
+		}
 	}
 }
 
@@ -88,9 +120,9 @@ func TestCustomerController_CreateCustomer(t *testing.T) {
 	customerService := services.NewCustomerService()
 	// Create a new customer controller
 	customerController := NewCustomerController(customerService)
+
 	// Create a new customer
-	newCustomer := models.Customer{
-		ID:        6,
+	newCustomer := viewmodels.CustomerCreateViewModel{
 		Name:      "Vinh Dinh",
 		Role:      "Developer",
 		Email:     "vinhdinh@example.com",
@@ -104,29 +136,41 @@ func TestCustomerController_CreateCustomer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	// Create a new response recorder
 	rr := httptest.NewRecorder()
+
 	// Serve the request
 	router := mux.NewRouter()
 	customerController.RegisterRoutes(router)
 	router.ServeHTTP(rr, req)
+
 	// Check the response status code
 	if rr.Code != http.StatusCreated {
 		t.Errorf("Expected status code %d, but got %d", http.StatusCreated, rr.Code)
 	}
+	// Check the response body
+	actualResponse := viewmodels.CustomerViewModel{}
+
+	json.Unmarshal(rr.Body.Bytes(), &actualResponse)
+
+	if actualResponse.ID == uuid.Nil {
+		t.Error("Expected Create to return a new customer ID, but got nil")
+	}
+
 	// Check if the customer was created
-	createdCustomer := customerService.GetById(newCustomer.ID)
+	createdCustomer := customerService.GetById(actualResponse.ID)
 	if createdCustomer == nil {
-		t.Errorf("Expected customer with ID %d to be created, but got nil", newCustomer.ID)
+		t.Errorf("Expected customer with ID %s to be created, but got nil", actualResponse.ID.String())
 	} else {
 		if createdCustomer.Name != newCustomer.Name {
-			t.Errorf("Expected customer with ID %d to have name %s, but got '%s'", newCustomer.ID, newCustomer.Name, createdCustomer.Name)
+			t.Errorf("Expected customer with ID %s to have name %s, but got '%s'", actualResponse.ID.String(), newCustomer.Name, createdCustomer.Name)
 		}
 		if createdCustomer.Role != newCustomer.Role {
-			t.Errorf("Expected customer with ID %d to have role %s, but got '%s'", newCustomer.ID, newCustomer.Role, createdCustomer.Role)
+			t.Errorf("Expected customer with ID %s to have role %s, but got '%s'", actualResponse.ID.String(), newCustomer.Role, createdCustomer.Role)
 		}
 		if createdCustomer.Email != newCustomer.Email {
-			t.Errorf("Expected customer with ID %d to have email %s, but got '%s'", newCustomer.ID, newCustomer.Email, createdCustomer.Email)
+			t.Errorf("Expected customer with ID %s to have email %s, but got '%s'", actualResponse.ID.String(), newCustomer.Email, createdCustomer.Email)
 		}
 	}
 }
@@ -136,9 +180,9 @@ func TestCustomerController_UpdateCustomer(t *testing.T) {
 	customerService := services.NewCustomerService()
 	// Create a new customer controller
 	customerController := NewCustomerController(customerService)
+
 	// Create a new customer
-	newCustomer := models.Customer{
-		ID:        6,
+	newCustomer := viewmodels.CustomerCreateViewModel{
 		Name:      "Vinh Dinh",
 		Role:      "Tester",
 		Email:     "vinhdinh@example.com",
@@ -146,10 +190,19 @@ func TestCustomerController_UpdateCustomer(t *testing.T) {
 		Contacted: false,
 	}
 	// Add the new customer to the service
-	customerService.Create(newCustomer)
+	result, err := customerService.Create(newCustomer)
+
+	if err != nil {
+		t.Errorf("Expected Create to return nil error, but got %s", err.Error())
+	}
+
+	if result.ID == uuid.Nil {
+		t.Error("Expected Create to return a new customer ID, but got nil")
+	}
+
 	// Create a new request body with the updated customer
 	updatedCustomer := models.Customer{
-		ID:        6,
+		ID:        result.ID,
 		Name:      "Dinh Van Vinh",
 		Role:      "Product Owner",
 		Email:     "vinhdinh@example.com",
@@ -157,31 +210,37 @@ func TestCustomerController_UpdateCustomer(t *testing.T) {
 		Contacted: true,
 	}
 	reqBody, _ := json.Marshal(updatedCustomer)
+
 	// Create a new request
-	req, err := http.NewRequest("PUT", "/api/v1/customers/"+strconv.Itoa(updatedCustomer.ID), bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("PUT", "/api/v1/customers/"+updatedCustomer.ID.String(), bytes.NewBuffer(reqBody))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	// Create a new response recorder
 	rr := httptest.NewRecorder()
+
 	// Serve the request
 	router := mux.NewRouter()
 	customerController.RegisterRoutes(router)
 	router.ServeHTTP(rr, req)
+
 	// Check the response status code
 	if rr.Code != http.StatusOK {
 		t.Errorf("Expected status code %d, but got %d", http.StatusOK, rr.Code)
 	}
+
 	// Check if the customer was updated
-	entity := *customerService.GetById(updatedCustomer.ID)
-	if updatedCustomer.Name != entity.Name {
-		t.Errorf("Expected customer with ID %d to have name '%s', but got '%s'", updatedCustomer.ID, updatedCustomer.Name, entity.Name)
+	updatedCustomerEntity := *customerService.GetById(updatedCustomer.ID)
+
+	if updatedCustomer.Name != updatedCustomerEntity.Name {
+		t.Errorf("Expected customer with ID %s to have name '%s', but got '%s'", updatedCustomer.ID.String(), updatedCustomer.Name, updatedCustomerEntity.Name)
 	}
-	if updatedCustomer.Role != entity.Role {
-		t.Errorf("Expected customer with ID %d to have role '%s', but got '%s'", updatedCustomer.ID, updatedCustomer.Role, entity.Role)
+	if updatedCustomer.Role != updatedCustomerEntity.Role {
+		t.Errorf("Expected customer with ID %s to have role '%s', but got '%s'", updatedCustomer.ID.String(), updatedCustomer.Role, updatedCustomerEntity.Role)
 	}
-	if updatedCustomer.Email != entity.Email {
-		t.Errorf("Expected customer with ID %d to have email '%s', but got '%s'", updatedCustomer.ID, updatedCustomer.Email, entity.Email)
+	if updatedCustomer.Email != updatedCustomerEntity.Email {
+		t.Errorf("Expected customer with ID %s to have email '%s', but got '%s'", updatedCustomer.ID.String(), updatedCustomer.Email, updatedCustomerEntity.Email)
 	}
 }
 
@@ -192,10 +251,14 @@ func TestCustomerController_DeleteCustomer(t *testing.T) {
 	// Create a new customer controller
 	customerController := NewCustomerController(customerService)
 
-	customerId := 2
+	existingCustomerId, err := uuid.Parse("4405071c-2adc-499d-966f-3cfdfa1deedc")
+
+	if err != nil {
+		t.Errorf("Failed to parse existing customer ID: %s", err.Error())
+	}
 
 	// Create a new request
-	req, err := http.NewRequest("DELETE", "/api/v1/customers/"+strconv.Itoa(customerId), nil)
+	req, err := http.NewRequest("DELETE", "/api/v1/customers/"+existingCustomerId.String(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -214,8 +277,8 @@ func TestCustomerController_DeleteCustomer(t *testing.T) {
 	}
 
 	// Check if the customer was deleted
-	deletedCustomer := customerService.GetById(customerId)
+	deletedCustomer := customerService.GetById(existingCustomerId)
 	if deletedCustomer != nil {
-		t.Errorf("Expected customer with ID %d to be deleted, but got customer with ID %d", customerId, deletedCustomer.ID)
+		t.Errorf("Expected customer with ID %s to be deleted, but got customer with ID %d", existingCustomerId.String(), deletedCustomer.ID)
 	}
 }

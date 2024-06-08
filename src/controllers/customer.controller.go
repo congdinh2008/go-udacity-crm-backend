@@ -3,10 +3,10 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
-	"congdinh.com/crm/models"
 	"congdinh.com/crm/services"
+	viewmodels "congdinh.com/crm/view-models"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -38,7 +38,7 @@ func (cc *CustomerController) RegisterRoutes(router *mux.Router) {
 // @Tags customers
 // @Accept  json
 // @Produce  json
-// @Success 200 {array} models.Customer
+// @Success 200 {array} viewmodels.CustomerViewModel
 // @Router /customers [get]
 func (cc *CustomerController) GetCustomers(w http.ResponseWriter, r *http.Request) {
 	customers := cc.ICustomerService.GetAll()
@@ -54,12 +54,17 @@ func (cc *CustomerController) GetCustomers(w http.ResponseWriter, r *http.Reques
 // @Tags customers
 // @Accept  json
 // @Produce  json
-// @Param id path int true "Customer ID"
-// @Success 200 {object} models.Customer
+// @Param id path string true "Customer ID"
+// @Success 200 {object} viewmodels.CustomerViewModel
 // @Router /customers/{id} [get]
 func (cc *CustomerController) GetCustomer(w http.ResponseWriter, r *http.Request) {
 	// Get the ID from the request and convert it to an integer
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	id, err := uuid.Parse(mux.Vars(r)["id"])
+
+	if err != nil {
+		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
+		return
+	}
 
 	customer := cc.ICustomerService.GetById(id)
 
@@ -79,14 +84,14 @@ func (cc *CustomerController) GetCustomer(w http.ResponseWriter, r *http.Request
 // @Tags customers
 // @Accept  json
 // @Produce  json
-// @Param   customer  body models.Customer  true  "Add Customer"
-// @Success 201  {object}  models.Customer  "Successfully created"
+// @Param   customer  body viewmodels.CustomerCreateViewModel  true  "Add Customer"
+// @Success 201  {object}  viewmodels.CustomerViewModel  "Successfully created"
 // @Failure 400  {object}  nil  "Bad Request"
 // @Router /customers [post]
 func (cc *CustomerController) CreateCustomer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var newCustomer models.Customer
+	var newCustomer viewmodels.CustomerCreateViewModel
 
 	// Decode the request body into newCustomer
 	err := json.NewDecoder(r.Body).Decode(&newCustomer)
@@ -102,14 +107,14 @@ func (cc *CustomerController) CreateCustomer(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if !result {
+	if result.ID == uuid.Nil {
 		http.Error(w, "Failed to create the customer", http.StatusBadRequest)
 		return
 	}
 
 	// Respond to the client
 	w.WriteHeader(http.StatusCreated) // HTTP 201
-	json.NewEncoder(w).Encode(newCustomer)
+	json.NewEncoder(w).Encode(result)
 }
 
 // UpdateCustomer godoc
@@ -118,21 +123,27 @@ func (cc *CustomerController) CreateCustomer(w http.ResponseWriter, r *http.Requ
 // @Tags customers
 // @Accept  json
 // @Produce  json
-// @Param   id   path      int  true  "Customer ID"
-// @Param   customer  body      models.Customer  true  "Update Customer"
-// @Success 200  {object}  models.Customer  "Successfully updated"
+// @Param   id   path      string  true  "Customer ID"
+// @Param   customer  body      viewmodels.CustomerEditViewModel  true  "Update Customer"
+// @Success 200  {object}  viewmodels.CustomerViewModel  "Successfully updated"
 // @Failure 400  {object}  nil  "Bad Request"
 // @Router /customers/{id} [put]
 func (cc *CustomerController) UpdateCustomer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Get the ID from the request and convert it to an integer
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	// Get the ID from the request and convert it to an uuid
+	id, error := uuid.Parse(mux.Vars(r)["id"])
 
-	var updatedCustomer models.Customer
+	if error != nil {
+		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
+		return
+	}
+
+	var updatedCustomer viewmodels.CustomerEditViewModel
 
 	// Decode the request body into updatedCustomer
 	err := json.NewDecoder(r.Body).Decode(&updatedCustomer)
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -145,7 +156,7 @@ func (cc *CustomerController) UpdateCustomer(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if !result {
+	if result.ID == uuid.Nil {
 		http.Error(w, "Failed to update the customer", http.StatusBadRequest)
 		return
 	}
@@ -161,17 +172,17 @@ func (cc *CustomerController) UpdateCustomer(w http.ResponseWriter, r *http.Requ
 // @Tags customers
 // @Accept  json
 // @Produce  json
-// @Param   id   path      int  true  "Customer ID"
+// @Param   id   path      string  true  "Customer ID"
 // @Success 204  "Successfully deleted"
 // @Failure 400  {object}  nil  "Bad Request"
 // @Router /customers/{id} [delete]
 func (cc *CustomerController) DeleteCustomer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Get the ID from the request and convert it to an integer
-	id, _ := strconv.Atoi(mux.Vars(r)["id"])
+	// Get the ID from the request and convert it to an uuid
+	id, err := uuid.Parse(mux.Vars(r)["id"])
 
-	if id <= 0 {
+	if err != nil {
 		http.Error(w, "Invalid customer ID", http.StatusBadRequest)
 		return
 	}

@@ -1,12 +1,15 @@
 package services
 
-import "congdinh.com/crm/models"
+import (
+	viewmodels "congdinh.com/crm/view-models"
+	"github.com/google/uuid"
+)
 
 // ICustomerService defines the interface for customer service operations
 type ICustomerService interface {
-	GetAll() []models.Customer
-	GetById(id int) *models.Customer
-	Create(customer models.Customer) (bool, error)
-	Update(id int, customer models.Customer) (bool, error)
-	Delete(id int) bool
+	GetAll() []viewmodels.CustomerViewModel
+	GetById(id uuid.UUID) *viewmodels.CustomerViewModel
+	Create(customer viewmodels.CustomerCreateViewModel) (viewmodels.CustomerViewModel, error)
+	Update(id uuid.UUID, customer viewmodels.CustomerEditViewModel) (viewmodels.CustomerViewModel, error)
+	Delete(id uuid.UUID) bool
 }

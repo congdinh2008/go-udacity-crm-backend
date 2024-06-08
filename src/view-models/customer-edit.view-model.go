@@ -1,8 +1,8 @@
-package models
+package viewmodels
 
 import "github.com/google/uuid"
 
-type Customer struct {
+type CustomerEditViewModel struct {
 	ID        uuid.UUID
 	Name      string
 	Role      string

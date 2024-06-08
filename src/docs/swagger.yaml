@@ -1,12 +1,40 @@
 definitions:
-  models.Customer:
+  viewmodels.CustomerCreateViewModel:
+    properties:
+      contacted:
+        type: boolean
+      email:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+    type: object
+  viewmodels.CustomerEditViewModel:
     properties:
       contacted:
         type: boolean
       email:
         type: string
       id:
-        type: integer
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+    type: object
+  viewmodels.CustomerViewModel:
+    properties:
+      contacted:
+        type: boolean
+      email:
+        type: string
+      id:
+        type: string
       name:
         type: string
       phone:
@@ -29,7 +57,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Customer'
+              $ref: '#/definitions/viewmodels.CustomerViewModel'
             type: array
       summary: Show a list of customers
       tags:
@@ -44,14 +72,14 @@ paths:
         name: customer
         required: true
         schema:
-          $ref: '#/definitions/models.Customer'
+          $ref: '#/definitions/viewmodels.CustomerCreateViewModel'
       produces:
       - application/json
       responses:
         "201":
           description: Successfully created
           schema:
-            $ref: '#/definitions/models.Customer'
+            $ref: '#/definitions/viewmodels.CustomerViewModel'
         "400":
           description: Bad Request
       summary: Create a new customer
@@ -67,7 +95,7 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -87,14 +115,14 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Customer'
+            $ref: '#/definitions/viewmodels.CustomerViewModel'
       summary: Show a customer
       tags:
       - customers
@@ -107,20 +135,20 @@ paths:
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       - description: Update Customer
         in: body
         name: customer
         required: true
         schema:
-          $ref: '#/definitions/models.Customer'
+          $ref: '#/definitions/viewmodels.CustomerEditViewModel'
       produces:
       - application/json
       responses:
         "200":
           description: Successfully updated
           schema:
-            $ref: '#/definitions/models.Customer'
+            $ref: '#/definitions/viewmodels.CustomerViewModel'
         "400":
           description: Bad Request
       summary: Update an existing customer

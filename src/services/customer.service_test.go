@@ -3,7 +3,8 @@ package services
 import (
 	"testing"
 
-	"congdinh.com/crm/models"
+	viewmodels "congdinh.com/crm/view-models"
+	"github.com/google/uuid"
 )
 
 func TestCustomerService_GetAll(t *testing.T) {
@@ -19,20 +20,25 @@ func TestCustomerService_GetAll(t *testing.T) {
 func TestCustomerService_GetById(t *testing.T) {
 	customerService := NewCustomerService()
 
-	customer := customerService.GetById(3)
+	existingCustomerId, err := uuid.Parse("4405071c-2adc-499d-966f-3cfdfa1deedc")
+
+	if err != nil {
+		t.Errorf("Failed to parse existing customer ID: %s", err.Error())
+	}
+
+	customer := customerService.GetById(existingCustomerId)
 
 	if customer == nil {
 		t.Errorf("Expected customer with ID 3, but got nil")
-	} else if customer.ID != 3 {
-		t.Errorf("Expected customer with ID 3, but got ID %d", customer.ID)
+	} else if customer.ID != existingCustomerId {
+		t.Errorf("Expected customer with ID 3, but got ID %s", customer.ID.String())
 	}
 }
 
 func TestCustomerService_Create(t *testing.T) {
 	customerService := NewCustomerService()
 
-	newCustomer := models.Customer{
-		ID:        6,
+	newCustomer := viewmodels.CustomerCreateViewModel{
 		Name:      "New Customer",
 		Role:      "Tester",
 		Email:     "new@domain.com",
@@ -40,14 +46,14 @@ func TestCustomerService_Create(t *testing.T) {
 		Contacted: false,
 	}
 
-	success, err := customerService.Create(newCustomer)
+	result, err := customerService.Create(newCustomer)
 
 	if err != nil {
 		t.Errorf("Expected Create to return nil error, but got %s", err.Error())
 	}
 
-	if !success {
-		t.Error("Expected Create to return true, but got false")
+	if result.ID == uuid.Nil {
+		t.Error("Expected Create to return a new customer ID, but got nil")
 	}
 
 	customers := customerService.GetAll()
@@ -55,13 +61,39 @@ func TestCustomerService_Create(t *testing.T) {
 	if len(customers) != 6 {
 		t.Errorf("Expected 6 customers after Create, but got %d", len(customers))
 	}
+
+	newCustomerId := result.ID
+
+	createdCustomer := customerService.GetById(newCustomerId)
+
+	if createdCustomer == nil {
+		t.Errorf("Expected customer with ID 6 after Create, but got nil")
+	}
+
+	if createdCustomer.Name != "New Customer" {
+		t.Errorf("Expected customer name to be 'New Customer', but got '%s'", createdCustomer.Name)
+	}
+
+	if createdCustomer.Role != "Tester" {
+		t.Errorf("Expected customer role to be 'Tester', but got '%s'", createdCustomer.Role)
+	}
+
+	if createdCustomer.Email != "new@domain.com" {
+		t.Errorf("Expected customer email to be %s, but got %s", newCustomer.Email, createdCustomer.Email)
+	}
 }
 
 func TestCustomerService_Update(t *testing.T) {
 	customerService := NewCustomerService()
 
-	updatedCustomer := models.Customer{
-		ID:        4,
+	existingCustomerId, err := uuid.Parse("4405071c-2adc-499d-966f-3cfdfa1deedc")
+
+	if err != nil {
+		t.Errorf("Failed to parse existing customer ID: %s", err.Error())
+	}
+
+	updatedCustomer := viewmodels.CustomerEditViewModel{
+		ID:        existingCustomerId,
 		Name:      "Updated Customer",
 		Role:      "Developer",
 		Email:     "updated@domain.com",
@@ -69,29 +101,49 @@ func TestCustomerService_Update(t *testing.T) {
 		Contacted: true,
 	}
 
-	success, err := customerService.Update(4, updatedCustomer)
+	result, err := customerService.Update(existingCustomerId, updatedCustomer)
 
 	if err != nil {
 		t.Errorf("Expected Update to return nil error, but got %s", err.Error())
 	}
 
-	if !success {
-		t.Error("Expected Update to return true, but got false")
+	if result.ID != existingCustomerId {
+		t.Errorf("Expected Update to return customer with ID %s, but got ID %s", existingCustomerId.String(), result.ID.String())
 	}
 
-	customer := customerService.GetById(4)
+	updatedCustomerEntity := customerService.GetById(existingCustomerId)
 
-	if customer == nil {
-		t.Errorf("Expected customer with ID 4 after Update, but got nil")
-	} else if customer.Name != "Updated Customer" {
-		t.Errorf("Expected customer name to be 'Updated Customer', but got '%s'", customer.Name)
+	if updatedCustomerEntity == nil {
+		t.Errorf("Expected customer with ID %s to be updated, but got nil", existingCustomerId.String())
+	}
+
+	if updatedCustomerEntity.Name != updatedCustomer.Name {
+		t.Errorf("Expected customer name to be %s, but got '%s'", updatedCustomer.Name, updatedCustomerEntity.Name)
+	}
+
+	if updatedCustomerEntity.Role != updatedCustomer.Role {
+		t.Errorf("Expected customer role to be %s, but got '%s'", updatedCustomer.Role, updatedCustomerEntity.Role)
+	}
+
+	if updatedCustomerEntity.Email != updatedCustomer.Email {
+		t.Errorf("Expected customer email to be %s, but got %s", updatedCustomer.Email, updatedCustomerEntity.Email)
+	}
+
+	if updatedCustomerEntity.Phone != updatedCustomer.Phone {
+		t.Errorf("Expected customer phone to be %s, but got %s", updatedCustomer.Phone, updatedCustomerEntity.Phone)
 	}
 }
 
 func TestCustomerService_Delete(t *testing.T) {
 	customerService := NewCustomerService()
 
-	success := customerService.Delete(2)
+	existingCustomerId, err := uuid.Parse("4405071c-2adc-499d-966f-3cfdfa1deedc")
+
+	if err != nil {
+		t.Errorf("Failed to parse existing customer ID: %s", err.Error())
+	}
+
+	success := customerService.Delete(existingCustomerId)
 
 	if !success {
 		t.Error("Expected Delete to return true, but got false")
@@ -103,7 +155,7 @@ func TestCustomerService_Delete(t *testing.T) {
 		t.Errorf("Expected 4 customers after Delete, but got %d", len(customers))
 	}
 
-	deletedCustomer := customerService.GetById(2)
+	deletedCustomer := customerService.GetById(existingCustomerId)
 
 	if deletedCustomer != nil {
 		t.Errorf("Expected customer with ID 2 to be deleted, but got customer with ID %d", deletedCustomer.ID)

@@ -34,7 +34,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/models.Customer"
+                                "$ref": "#/definitions/viewmodels.CustomerViewModel"
                             }
                         }
                     }
@@ -59,7 +59,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerCreateViewModel"
                         }
                     }
                 ],
@@ -67,7 +67,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Successfully created",
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerViewModel"
                         }
                     },
                     "400": {
@@ -91,7 +91,7 @@ const docTemplate = `{
                 "summary": "Show a customer",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Customer ID",
                         "name": "id",
                         "in": "path",
@@ -102,7 +102,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerViewModel"
                         }
                     }
                 }
@@ -121,7 +121,7 @@ const docTemplate = `{
                 "summary": "Update an existing customer",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Customer ID",
                         "name": "id",
                         "in": "path",
@@ -133,7 +133,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerEditViewModel"
                         }
                     }
                 ],
@@ -141,7 +141,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully updated",
                         "schema": {
-                            "$ref": "#/definitions/models.Customer"
+                            "$ref": "#/definitions/viewmodels.CustomerViewModel"
                         }
                     },
                     "400": {
@@ -163,7 +163,7 @@ const docTemplate = `{
                 "summary": "Delete a customer",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "Customer ID",
                         "name": "id",
                         "in": "path",
@@ -182,7 +182,27 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "models.Customer": {
+        "viewmodels.CustomerCreateViewModel": {
+            "type": "object",
+            "properties": {
+                "contacted": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "viewmodels.CustomerEditViewModel": {
             "type": "object",
             "properties": {
                 "contacted": {
@@ -192,7 +212,30 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "viewmodels.CustomerViewModel": {
+            "type": "object",
+            "properties": {
+                "contacted": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"

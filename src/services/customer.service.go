@@ -11,6 +11,8 @@ import (
 	"runtime"
 
 	"congdinh.com/crm/models"
+	viewmodels "congdinh.com/crm/view-models"
+	"github.com/google/uuid"
 )
 
 // CustomerService struct
@@ -51,47 +53,104 @@ func NewCustomerService() *CustomerService {
 }
 
 // GetAl method return all customers
-func (cs *CustomerService) GetAll() []models.Customer {
-	return cs.Customers
+func (cs *CustomerService) GetAll() []viewmodels.CustomerViewModel {
+	customerViewModels := []viewmodels.CustomerViewModel{}
+	for _, customer := range cs.Customers {
+		customerViewModel := viewmodels.CustomerViewModel{
+			ID:        customer.ID,
+			Name:      customer.Name,
+			Role:      customer.Role,
+			Email:     customer.Email,
+			Phone:     customer.Phone,
+			Contacted: customer.Contacted,
+		}
+		customerViewModels = append(customerViewModels, customerViewModel)
+	}
+	return customerViewModels
 }
 
 // GetById method return a customer by ID
-func (cs *CustomerService) GetById(id int) *models.Customer {
+func (cs *CustomerService) GetById(id uuid.UUID) *viewmodels.CustomerViewModel {
 	for _, customer := range cs.Customers {
 		if customer.ID == id {
-			return &customer
+			customerViewModel := viewmodels.CustomerViewModel{
+				ID:        customer.ID,
+				Name:      customer.Name,
+				Role:      customer.Role,
+				Email:     customer.Email,
+				Phone:     customer.Phone,
+				Contacted: customer.Contacted,
+			}
+			return &customerViewModel
 		}
 	}
 	return nil
 }
 
 // Create method create a new customer
-func (cs *CustomerService) Create(customer models.Customer) (bool, error) {
+func (cs *CustomerService) Create(customerCreateViewModel viewmodels.CustomerCreateViewModel) (viewmodels.CustomerViewModel, error) {
 	// Check if the customer id already exists
 	for _, c := range cs.Customers {
-		if c.ID == customer.ID {
-			return false, errors.New("customer with the same id already exists")
+		if c.Email == customerCreateViewModel.Email || c.Phone == customerCreateViewModel.Phone {
+			return viewmodels.CustomerViewModel{}, errors.New("customer already exists")
 		}
 	}
 
-	cs.Customers = append(cs.Customers, customer)
-	return true, nil
+	newCustomer := models.Customer{
+		ID:        uuid.New(),
+		Name:      customerCreateViewModel.Name,
+		Role:      customerCreateViewModel.Role,
+		Email:     customerCreateViewModel.Email,
+		Phone:     customerCreateViewModel.Phone,
+		Contacted: customerCreateViewModel.Contacted,
+	}
+
+	cs.Customers = append(cs.Customers, newCustomer)
+
+	customerViewModel := viewmodels.CustomerViewModel{
+		ID:        newCustomer.ID,
+		Name:      newCustomer.Name,
+		Role:      newCustomer.Role,
+		Email:     newCustomer.Email,
+		Phone:     newCustomer.Phone,
+		Contacted: newCustomer.Contacted,
+	}
+
+	return customerViewModel, nil
 }
 
 // Update method update a customer by ID
-func (cs *CustomerService) Update(id int, customer models.Customer) (bool, error) {
+func (cs *CustomerService) Update(id uuid.UUID, customer viewmodels.CustomerEditViewModel) (viewmodels.CustomerViewModel, error) {
+	var updatedCustomer models.Customer
 	for i, c := range cs.Customers {
 		if c.ID == id {
-			cs.Customers[i] = customer
-			return true, nil
+			updatedCustomer = models.Customer{
+				ID:        id,
+				Name:      customer.Name,
+				Role:      customer.Role,
+				Email:     customer.Email,
+				Phone:     customer.Phone,
+				Contacted: customer.Contacted,
+			}
+			cs.Customers[i] = updatedCustomer
+
+			customerViewModel := viewmodels.CustomerViewModel{
+				ID:        updatedCustomer.ID,
+				Name:      updatedCustomer.Name,
+				Role:      updatedCustomer.Role,
+				Email:     updatedCustomer.Email,
+				Phone:     updatedCustomer.Phone,
+				Contacted: updatedCustomer.Contacted,
+			}
+			return customerViewModel, nil
 		}
 	}
 
-	return false, errors.New("customer not found")
+	return viewmodels.CustomerViewModel{}, errors.New("customer not found")
 }
 
 // Delete method delete a customer by ID
-func (cs *CustomerService) Delete(id int) bool {
+func (cs *CustomerService) Delete(id uuid.UUID) bool {
 	for i, customer := range cs.Customers {
 		if customer.ID == id {
 			cs.Customers = append(cs.Customers[:i], cs.Customers[i+1:]...)
